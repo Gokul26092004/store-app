@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -72,5 +73,14 @@ public class ProductController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/range")
+    public ResponseEntity<List<ProductDTO>> getProductsByPriceRange(
+            @RequestParam @DecimalMin(value = "1.00", message = "Min price must be at least 1.00.") BigDecimal min,
+
+            @RequestParam @DecimalMin(value = "1.00", message = "Max price must be at least 1.00.") BigDecimal max) {
+        List<ProductDTO> filteredRange = productService.getProductsByPriceRange(min, max);
+        return ResponseEntity.ok(filteredRange);
     }
 }

@@ -5,11 +5,13 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface ProductRepo extends JpaRepository<Product, Long> {
+
     @EntityGraph(attributePaths = "category")
     List<Product> findAllByProductNameContainingIgnoreCase(String productName);
 
@@ -21,4 +23,7 @@ public interface ProductRepo extends JpaRepository<Product, Long> {
 
     @EntityGraph(attributePaths = "category")
     List<Product> findAllByCategoryId(Long categoryId);
+
+    @EntityGraph(attributePaths = "category")
+    List<Product> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice);
 }

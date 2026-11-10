@@ -11,6 +11,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,7 +47,8 @@ public class ProductService {
         return productRepo.existsById(id);
     }
 
-    @CacheEvict(value = { "allProducts", "allProductsByName", "productById" }, allEntries = true)
+    @CacheEvict(value = { "allProducts", "allProductsByName", "productById",
+            "productsByPriceRange" }, allEntries = true)
     public ProductDTO insert(ProductDTO productDTO) {
         Product product = productMapper.toEntity(productDTO);
         Category category = getCategoryByName(productDTO.getCategoryName());
@@ -54,7 +56,8 @@ public class ProductService {
         return productMapper.toDTO(productRepo.save(product));
     }
 
-    @CacheEvict(value = { "allProducts", "allProductsByName", "productById" }, allEntries = true)
+    @CacheEvict(value = { "allProducts", "allProductsByName", "productById",
+            "productsByPriceRange" }, allEntries = true)
     public Optional<ProductDTO> update(Long id, ProductDTO productDTO) {
         return productRepo.findById(id).map(product -> {
             product.setProductName(productDTO.getProductName());
@@ -71,7 +74,8 @@ public class ProductService {
         });
     }
 
-    @CacheEvict(value = { "allProducts", "allProductsByName", "productById" }, allEntries = true)
+    @CacheEvict(value = { "allProducts", "allProductsByName", "productById",
+            "productsByPriceRange" }, allEntries = true)
     public boolean delete(Long id) {
         boolean exists = this.existsById(id);
         if (!exists) {
@@ -84,5 +88,13 @@ public class ProductService {
     private Category getCategoryByName(String categoryName) {
         return categoryRepo.findByCategoryName(categoryName)
                 .orElseThrow(() -> new RuntimeException("Category '" + categoryName + "' Not Found."));
+    }
+
+    @Cacheable(value = "productsByPriceRange", key = "#minPrice.toPlainString() + ':' + #maxPrice.toPlainString()")
+    public List<ProductDTO> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
+        if (minPrice.compareTo(maxPrice) > 0) {
+            throw new IllegalArgumentException("Minimum price cannot be greater than Maximum price");
+        }
+        return productRepo.findByPriceBetween(minPrice, maxPrice).stream().map(productMapper::toDTO).toList();
     }
 }
